@@ -44,9 +44,23 @@ const usersSchema = new mongoose.Schema({
         default: Date.now
     }
 })
+const followerSchema = new mongoose.Schema({
+    followersId: {
+        type: String,
+        required: true
+    },
+    following: {
+        type: String,
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+})
 // USers Model
 const User = mongoose.model("users", usersSchema);
-
+const Following = mongoose.model("following", followerSchema);
 app.post('/users', async (req, res) => {
     try {
         const newUser = new User({
@@ -87,6 +101,67 @@ app.get('/users/:username', async (req, res) => {
         res.status(500).send({ message: error.message });
     }
 })
+
+app.get('/users/:username/following', async (req, res) => {
+    try {
+        const following = await Following.find();
+        if (following) {
+            res.status(200).send(following);
+        } else {
+            res.status(404).send({ message: "Following users not found" })
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+})
+app.get('/users/:username/followers', async (req, res) => {
+    try {
+        const user = await User.findOne({ userName: req.params.username });
+        console.log(user._id);
+        const followers = await Following.find({ followersId: { $eq: user._id } });
+        if (followers) {
+            res.status(200).send(followers);
+        } else {
+            res.status(404).send({ message: "Following users not found" })
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+})
+
+
+app.post('/users/:username/follow', async (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = await User.findOne({ userName: username })
+        if (user) {
+            const newFollowing = new Following({
+                followersId: user._id,
+                following: req.body.following
+            })
+            const followingData = await newFollowing.save();
+            res.status(200).send(followingData);
+        } else {
+            res.status(404).send({ message: "User not found" })
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+})
+app.delete('/users/:username/follow', async (req, res) => {
+    try {
+        const following = req.body.following;
+        const unfollow = await Following.findOne({ following: following })
+        if (unfollow) {
+            res.status(200).send({ message: " Unfollow User successfully" });
+        } else {
+            res.status(404).send({ message: "Following user not found" })
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+})
+
 app.get('/', (req, res) => {
     res.send('Lovestump Server Is Running');
 })
