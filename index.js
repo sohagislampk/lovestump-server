@@ -62,6 +62,31 @@ app.post('/users', async (req, res) => {
         res.status(500).send({ message: error.message });
     }
 })
+app.get('/users', async (req, res) => {
+    try {
+        const users = await User.find()
+        if (users) {
+            res.status(200).send(users);
+        } else {
+            res.status(404).send({ message: "Users not found" })
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+})
+app.get('/users/:username', async (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = await User.findOne({ userName: username })
+        if (user) {
+            res.status(200).send(user);
+        } else {
+            res.status(404).send({ message: "User not found" })
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+})
 app.get('/', (req, res) => {
     res.send('Lovestump Server Is Running');
 })
